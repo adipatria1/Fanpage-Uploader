@@ -92,27 +92,6 @@ python app.py
 - Hashtag presets
 - Custom hashtag combinations
 
-## Project Structure
-
-```
-├── app.py                 # Main application file
-├── config.py             # Configuration settings
-├── requirements.txt      # Python dependencies
-├── .env                 # Environment variables
-├── static/
-│   └── styles.css       # CSS styles
-├── templates/
-│   └── index.html       # Main upload interface
-├── utils/
-│   ├── facebook_api/    # Facebook API integration
-│   │   ├── media.py     # Media upload handling
-│   │   ├── reels.py     # Reels upload handling
-│   │   └── utils.py     # Shared utilities
-│   └── video_handler.py # Media file processing
-└── routes/
-    └── upload_routes.py # Upload route handlers
-```
-
 ## Error Handling
 
 The application includes comprehensive error handling for:
@@ -158,20 +137,8 @@ The application includes comprehensive error handling for:
    - Check app permissions
    - Ensure proper page roles
 
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit changes
-4. Push to the branch
-5. Create a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Acknowledgments
 
-- Facebook Graph API Documentation
-- Flask Documentation
-- Python Requests Library
+This project was inspired by:
+- [Xavier Zambrano](https://github.com/xavierZambrano/)
