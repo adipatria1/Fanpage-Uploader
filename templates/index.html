@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facebook Media Uploader</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <h1>Upload to Facebook</h1>
+    <form action="/upload" method="POST" enctype="multipart/form-data">
+        <h3>Upload Type:</h3>
+        <select name="upload_type" id="uploadType">
+            <option value="reels">Facebook Pages Reels</option>
+            <option value="media">Facebook Pages Media</option>
+        </select>
+
+        <div id="pageSelection" class="upload-section">
+            <h3>Select Pages:</h3>
+            {% for page in pages %}
+            <div>
+                <input type="checkbox" name="pages" value="{{ page.id }}|{{ page.access_token }}">
+                <label>{{ page.name }}</label>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div id="videoForms">
+            <div class="media-form">
+                <h3 class="upload-label">Upload Media:</h3>
+                <input type="file" name="media[]" accept="video/mp4,image/*" class="media-input" required><br><br>
+
+                <h3>Description:</h3>
+                <textarea name="description[]" rows="4" cols="50" class="description-input" required></textarea><br><br>
+
+                <label>
+                    <input type="checkbox" class="auto-description">
+                    Use filename as description
+                </label><br><br>
+
+                <div class="hashtag-section reels-only">
+                    <h3>Hashtags (Optional):</h3>
+                    <div class="hashtag-container">
+                        <div class="hashtag-option">
+                            <input type="checkbox" value="#fun #funny" class="hashtag-checkbox">
+                            <label>#fun #funny</label>
+                        </div>
+                        <div class="hashtag-option">
+                            <input type="checkbox" value="#trending" class="hashtag-checkbox">
+                            <label>#trending</label>
+                        </div>
+                        <div class="hashtag-option">
+                            <input type="checkbox" value="#viral" class="hashtag-checkbox">
+                            <label>#viral</label>
+                        </div>
+                        <div class="hashtag-option">
+                            <input type="checkbox" value="#reels" class="hashtag-checkbox">
+                            <label>#reels</label>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>Schedule (Optional):</h3>
+                <input type="datetime-local" name="schedule_time[]" class="schedule-time"><br><br>
+            </div>
+        </div>
+
+        <button type="button" id="addMediaButton">Add Another Media</button><br><br>
+        <button type="submit">Upload</button>
+    </form>
+
+    <script>
+        const uploadType = document.getElementById('uploadType');
+        const mediaForms = document.getElementById('videoForms');
+        const addMediaButton = document.getElementById('addMediaButton');
+
+        function updateFormLayout() {
+            const isReels = uploadType.value === 'reels';
+            const mediaInputs = document.querySelectorAll('.media-input');
+            const uploadLabels = document.querySelectorAll('.upload-label');
+            const reelsOnlyElements = document.querySelectorAll('.reels-only');
+
+            mediaInputs.forEach(input => {
+                input.accept = isReels ? 'video/mp4' : 'video/mp4,image/*';
+            });
+
+            uploadLabels.forEach(label => {
+                label.textContent = isReels ? 'Upload Video:' : 'Upload Media:';
+            });
+
+            reelsOnlyElements.forEach(element => {
+                element.style.display = isReels ? 'block' : 'none';
+            });
+        }
+
+        function getFileNameWithoutExtension(fileName) {
+            return fileName.split('.').slice(0, -1).join('.');
+        }
+
+        function attachMediaHandlers() {
+            const forms = document.querySelectorAll('.media-form');
+            forms.forEach((form) => {
+                const mediaInput = form.querySelector('.media-input');
+                const descriptionInput = form.querySelector('.description-input');
+                const autoDescriptionCheckbox = form.querySelector('.auto-description');
+                const hashtagCheckboxes = form.querySelectorAll('.hashtag-checkbox');
+
+                autoDescriptionCheckbox.addEventListener('change', function() {
+                    if (this.checked && mediaInput.files.length > 0) {
+                        const fileName = getFileNameWithoutExtension(mediaInput.files[0].name);
+                        descriptionInput.value = fileName;
+                    } else if (!this.checked) {
+                        descriptionInput.value = '';
+                    }
+                });
+
+                mediaInput.addEventListener('change', function() {
+                    if (autoDescriptionCheckbox.checked && this.files.length > 0) {
+                        const fileName = getFileNameWithoutExtension(this.files[0].name);
+                        descriptionInput.value = fileName;
+                    }
+                });
+
+                hashtagCheckboxes.forEach((checkbox) => {
+                    checkbox.addEventListener('change', function() {
+                        let descriptionParts = descriptionInput.value.split(' ');
+                        const mainDescription = descriptionParts.filter(part => !part.startsWith('#')).join(' ');
+                        const currentHashtags = new Set(descriptionParts.filter(part => part.startsWith('#')));
+
+                        if (checkbox.checked) {
+                            checkbox.value.split(' ').forEach(tag => currentHashtags.add(tag));
+                        } else {
+                            checkbox.value.split(' ').forEach(tag => currentHashtags.delete(tag));
+                        }
+
+                        descriptionInput.value = `${mainDescription} ${[...currentHashtags].join(' ')}`.trim();
+                    });
+                });
+            });
+        }
+
+        uploadType.addEventListener('change', updateFormLayout);
+
+        addMediaButton.addEventListener('click', function() {
+            const scheduleTimes = document.querySelectorAll('.schedule-time');
+            let newTime = '';
+
+            if (scheduleTimes.length > 0) {
+                const lastScheduleTime = scheduleTimes[scheduleTimes.length - 1];
+                
+                if (lastScheduleTime.value) {
+                    const lastDateTime = new Date(lastScheduleTime.value);
+                    const newDateTime = new Date(lastDateTime);
+                    newDateTime.setHours(newDateTime.getHours() + 1);
+                    
+                    const pad = (num) => num.toString().padStart(2, '0');
+                    newTime = `${newDateTime.getFullYear()}-${pad(newDateTime.getMonth() + 1)}-${pad(newDateTime.getDate())}T${pad(newDateTime.getHours())}:${pad(newDateTime.getMinutes())}`;
+                }
+            }
+
+            const newForm = document.createElement('div');
+            newForm.className = 'media-form';
+            newForm.innerHTML = `
+                <h3 class="upload-label">${uploadType.value === 'reels' ? 'Upload Video:' : 'Upload Media:'}</h3>
+                <input type="file" name="media[]" accept="${uploadType.value === 'reels' ? 'video/mp4' : 'video/mp4,image/*'}" class="media-input" required><br><br>
+
+                <h3>Description:</h3>
+                <textarea name="description[]" rows="4" cols="50" class="description-input" required></textarea><br><br>
+
+                <label>
+                    <input type="checkbox" class="auto-description">
+                    Use filename as description
+                </label><br><br>
+
+                <div class="hashtag-section reels-only" ${uploadType.value === 'reels' ? '' : 'style="display: none;"'}>
+                    <h3>Hashtags (Optional):</h3>
+                    <div class="hashtag-container">
+                        <div class="hashtag-option">
+                            <input type="checkbox" value="#fun #funny" class="hashtag-checkbox">
+                            <label>#fun #funny</label>
+                        </div>
+                        <div class="hashtag-option">
+                            <input type="checkbox" value="#trending" class="hashtag-checkbox">
+                            <label>#trending</label>
+                        </div>
+                        <div class="hashtag-option">
+                            <input type="checkbox" value="#viral" class="hashtag-checkbox">
+                            <label>#viral</label>
+                        </div>
+                        <div class="hashtag-option">
+                            <input type="checkbox" value="#reels" class="hashtag-checkbox">
+                            <label>#reels</label>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>Schedule (Optional):</h3>
+                <input type="datetime-local" name="schedule_time[]" class="schedule-time" value="${newTime}"><br><br>
+            `;
+            
+            mediaForms.appendChild(newForm);
+            attachMediaHandlers();
+        });
+
+        updateFormLayout();
+        attachMediaHandlers();
+    </script>
+</body>
+</html>
