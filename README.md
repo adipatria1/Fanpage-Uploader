@@ -118,25 +118,6 @@ The application includes comprehensive error handling for:
    - Use relevant hashtags
    - Include calls to action
 
-## Troubleshooting
-
-### Common Issues
-
-1. **Upload Failures**
-   - Verify access token validity
-   - Check file size limits
-   - Ensure proper file formats
-
-2. **Scheduling Issues**
-   - Verify timezone settings
-   - Check for conflicting schedules
-   - Ensure future dates are valid
-
-3. **Permission Errors**
-   - Verify page access tokens
-   - Check app permissions
-   - Ensure proper page roles
-
 
 ## Acknowledgments
 
